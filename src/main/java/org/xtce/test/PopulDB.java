@@ -29,11 +29,10 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 
 public class PopulDB {
-	static private int c = 0;
+//	static private int c = 0;
 	 public static void main(String[] args) 
      {
-
-   	
+ 	
    		   
 
    	        String file = "Delfi-C3.xml";
@@ -58,10 +57,9 @@ public class PopulDB {
    	        
    	            XTCETMStream stream = db_.getStream( "TLM" );
    	           
-   	            for (int l=0; l<4; l++) {
+   	            for (int l=0; l<40; l++) {
    	    	        
-   	            		System.out.println("debug");
-   	            	// Instantiating Get class
+    	           	// Instantiating Get class
    	    	         Get g = new Get(Bytes.toBytes(l));
 
    	    	         // Reading the data
@@ -93,8 +91,6 @@ public class PopulDB {
    	 
    	        List<XTCEContainerContentEntry> entries = model.getContentList();
             
-//          System.out.println("debug2");
-   	        int k = 0;
    	        for (XTCEContainerContentEntry entry : entries) {
    	        	 
    	        	
@@ -122,8 +118,7 @@ public class PopulDB {
 			    	      p.addColumn(Bytes.toBytes("tags"),Bytes.toBytes("Sat"),
 			    	    		  Bytes.toBytes("Delfi-C3"));
 			    	      hTable.put(p);
-			    	      k++;
-   	            	      c++;
+//   	            	  c++;
 //   	            	System.out.println(": " + val.getCalibratedValue() + " "
 //   	                        + entry.getParameter().getUnits() + " ("
 //   	                        + val.getRawValueHex()+ ")");
@@ -133,11 +128,9 @@ public class PopulDB {
    	           }
    	            //for insert in openTSDB
    	           // double num = Double.valueOf(val.getCalibratedValue());
-//   	          System.out.println("debug3");
+
    	        
-  	       }
-  		         
-   	        
+  	       }  		                 
    	        
    	        
 //   	        List<String> warnings = model.getWarnings();
