@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 
+
 public class PopulDB {
 //	static private int c = 0;
 	 public static void main(String[] args) 
@@ -47,7 +48,7 @@ public class PopulDB {
    	            //System.out.println("Loading " + file + " database");
 
    	            XTCEDatabase db_ = new XTCEDatabase(new File(file), true, false, true);
-   	           
+   	            
 //   	            List<String> warnings = db_.getDocumentWarnings();
 //   	            Iterator<String> it = warnings.iterator();
 //   	            while(it.hasNext())
@@ -57,7 +58,7 @@ public class PopulDB {
    	        
    	            XTCETMStream stream = db_.getStream( "TLM" );
    	           
-   	            for (int l=0; l<40; l++) {
+   	            for (int l=0; l<250; l++) {
    	    	        
     	           	// Instantiating Get class
    	    	         Get g = new Get(Bytes.toBytes(l));
@@ -66,6 +67,7 @@ public class PopulDB {
    	    	         Result result = hTable.get(g);
 
    	    	         byte [] tel = result.getValue(Bytes.toBytes("values"),Bytes.toBytes("Data"));
+//   	    	     byte [] ts = result.getValue(Bytes.toBytes("values"),Bytes.toBytes("TS"));
 
    	             processFrame(stream, tel, hTable1); 
    	           //processFrame(stream, p);
@@ -83,7 +85,7 @@ public class PopulDB {
         
    	    static void processFrame(XTCETMStream stream, byte[] data, Table hTable) throws XTCEDatabaseException, Exception
    	    {
-   	    	int hash = data.hashCode();
+//   	    	int hash = data.hashCode();
   		    	     
   		               {
    	    	
@@ -95,17 +97,15 @@ public class PopulDB {
    	        	 
    	        	
 //   	            System.out.print(entry.getName());
-                   
+                
    	            XTCEContainerEntryValue val = entry.getValue();
-
+   	           
    	            if (val == null)
    	            {
 //   	                System.out.println(); 
    	            } else
    	            {
-   	            	if (isWithinValidRange(entry))
-   	            	{}
-   	            	
+
    	            	  Put p = new Put(Bytes.toBytes(Bytes.add(	data, 
    	            			  									Bytes.toBytes("Delfi-C3"), 
    	            			  									Bytes.toBytes(entry.getName())).hashCode())); 
@@ -116,12 +116,35 @@ public class PopulDB {
 			              p.addColumn(Bytes.toBytes("tags"),Bytes.toBytes("Unit"),
 			    	    		  Bytes.toBytes(entry.getParameter().getUnits()));			             
 			    	      p.addColumn(Bytes.toBytes("tags"),Bytes.toBytes("Sat"),
-			    	    		  Bytes.toBytes("Delfi-C3"));
-			    	      hTable.put(p);
+			    	    		  Bytes.toBytes("Delfi-C3")); 
+			    	      if (isWithinValidRange(entry))
+			    	      {
+			    	    	  p.addColumn(Bytes.toBytes("tags"),Bytes.toBytes("validity"),
+			    	    		  Bytes.toBytes(1));		    	    	  
+			    	      }
+			    	      else  
+			    	      {
+			    	    	  p.addColumn(Bytes.toBytes("tags"),Bytes.toBytes("validity"),
+				    	    	  Bytes.toBytes(0));
+			    	    	  System.out.println("invalid data: " + entry.getName());
+ 			    	      }
+			    	      
+//			    	      p.addColumn(Bytes.toBytes("tags"),Bytes.toBytes("TS"),
+//			    	    		  Bytes.toBytes());
+	    	    	      hTable.put(p);
 //   	            	  c++;
 //   	            	System.out.println(": " + val.getCalibratedValue() + " "
 //   	                        + entry.getParameter().getUnits() + " ("
 //   	                        + val.getRawValueHex()+ ")");
+	    	    	      
+//	    	    	      if (!isWithinValidRange(entry))
+//	    	    	      {
+//	    	    	    	  System.out.println(" INVALID!");
+//	    	    	      }
+//	    	    	      else
+//	    	    	      {
+//	    	    	    	  System.out.println();
+//	    	    	      }
    	              }
    	               
    	             
