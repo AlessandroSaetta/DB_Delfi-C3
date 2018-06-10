@@ -1,6 +1,7 @@
 package org.xtce.test;
 
 import java.io.File;
+//import java.nio.ByteBuffer;
 //import java.util.BitSet;
 //import java.util.Iterator;
 import java.util.List;
@@ -25,8 +26,13 @@ import org.apache.hadoop.hbase.client.Result;
 //import org.apache.hadoop.hbase.client.ResultScanner;
 //import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.client.Get;
+//import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
+//import org.apache.hadoop.hbase.client.HTable;
+//import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+
 
 
 public class PopulDB {
@@ -34,7 +40,6 @@ public class PopulDB {
 	 public static void main(String[] args) 
      {
  	
-   		   
 
    	        String file = "Delfi-C3.xml";
    	        
@@ -42,8 +47,8 @@ public class PopulDB {
    		     Configuration config = HBaseConfiguration.create();
 
    		      try (Connection conn = ConnectionFactory.createConnection(config);
-   		        Table hTable = conn.getTable(TableName.valueOf("Telemetry"))) {
-   		    	Table hTable1 = conn.getTable(TableName.valueOf("DB_1"));
+   		        Table hTable = conn.getTable(TableName.valueOf("DB_raw"))) {
+   		    	Table hTable1 = conn.getTable(TableName.valueOf("DB_tel_GO"));
 
    	            //System.out.println("Loading " + file + " database");
 
@@ -57,22 +62,47 @@ public class PopulDB {
 //   	            }
    	        
    	            XTCETMStream stream = db_.getStream( "TLM" );
-   	           
-   	            for (int l=0; l<250; l++) {
-   	    	        
-    	           	// Instantiating Get class
-   	    	         Get g = new Get(Bytes.toBytes(l));
+   	            
+   	            // Instantiating the Scan class
+   	            Scan scan = new Scan();
+  
+   	            // Scanning the required columns
+   	            scan.addColumn(Bytes.toBytes("values"), Bytes.toBytes("Data"));
+   	            scan.addColumn(Bytes.toBytes("values"), Bytes.toBytes("TS"));
 
-   	    	         // Reading the data
-   	    	         Result result = hTable.get(g);
+   	            // Getting the scan result
+   	            ResultScanner scanner = hTable.getScanner(scan);
+   	            
+//   	         int count = 0;
+//   	        for (Result result : scanner) {
+//   	            System.out.println("result = " + result);
+//   	            count++;
+//   	        }
+//   	        System.out.printf("Scanned %d results\n", count);
 
-   	    	         byte [] tel = result.getValue(Bytes.toBytes("values"),Bytes.toBytes("Data"));
-//   	    	     byte [] ts = result.getValue(Bytes.toBytes("values"),Bytes.toBytes("TS"));
+                for (Result r : scanner) {
+   	         
+//   	           
+   	            //scanner from timestamp to timestamp
+//  	            for (int l=0; l<250; l++) {
+//   	    	        
+//    	           	// Instantiating Get class
+//   	    	         Get g = new Get(Bytes.toBytes(l));
+//
+//   	    	         // Reading the data
+//   	    	         Result result = hTable.get(g);
+//
+   	    	         byte[] tel = r.getValue(Bytes.toBytes("values"),Bytes.toBytes("Data"));
+   	    	         byte[] ts  = r.getValue(Bytes.toBytes("values"),Bytes.toBytes("TS"));
+   	    	         
+   	    	         
 
-   	             processFrame(stream, tel, hTable1); 
-   	           //processFrame(stream, p);
-   	           //processFrame(stream, hk);
-   	             
+
+   	                 processFrame(stream, tel, ts, hTable1); 
+//   	             processFrame(stream, p);
+//   	             processFrame(stream, hk);
+
+   	                 
    	           }
                  
    	        } catch (XTCEDatabaseException ex)
@@ -83,7 +113,7 @@ public class PopulDB {
    	        }
    	    }
         
-   	    static void processFrame(XTCETMStream stream, byte[] data, Table hTable) throws XTCEDatabaseException, Exception
+   	    static void processFrame(XTCETMStream stream, byte[] data, byte[] ts, Table hTable) throws XTCEDatabaseException, Exception
    	    {
 //   	    	int hash = data.hashCode();
   		    	     
@@ -92,11 +122,11 @@ public class PopulDB {
    	    	XTCEContainerContentModel model = stream.processStream( data );
    	 
    	        List<XTCEContainerContentEntry> entries = model.getContentList();
-            
+            int paramCounter = 0;
    	        for (XTCEContainerContentEntry entry : entries) {
    	        	 
    	        	
-//   	            System.out.print(entry.getName());
+//   	        System.out.print(entry.getName());
                 
    	            XTCEContainerEntryValue val = entry.getValue();
    	           
@@ -106,9 +136,7 @@ public class PopulDB {
    	            } else
    	            {
 
-   	            	  Put p = new Put(Bytes.toBytes(Bytes.add(	data, 
-   	            			  									Bytes.toBytes("Delfi-C3"), 
-   	            			  									Bytes.toBytes(entry.getName())).hashCode())); 
+   	               	  Put p = new Put(Bytes.add(ts, Bytes.toBytes(paramCounter))); 
 			              p.addColumn(Bytes.toBytes("values"),Bytes.toBytes("eng_value"),
 			            		  Bytes.toBytes(val.getCalibratedValue()));
 			              p.addColumn(Bytes.toBytes("tags"),Bytes.toBytes("parameter_name"),
@@ -117,6 +145,8 @@ public class PopulDB {
 			    	    		  Bytes.toBytes(entry.getParameter().getUnits()));			             
 			    	      p.addColumn(Bytes.toBytes("tags"),Bytes.toBytes("Sat"),
 			    	    		  Bytes.toBytes("Delfi-C3")); 
+			    	      p.addColumn(Bytes.toBytes("tags"),Bytes.toBytes("Timestamp"),
+			    	    		  ts); 
 			    	      if (isWithinValidRange(entry))
 			    	      {
 			    	    	  p.addColumn(Bytes.toBytes("tags"),Bytes.toBytes("validity"),
@@ -126,14 +156,18 @@ public class PopulDB {
 			    	      {
 			    	    	  p.addColumn(Bytes.toBytes("tags"),Bytes.toBytes("validity"),
 				    	    	  Bytes.toBytes(0));
-			    	    	  System.out.println("invalid data: " + entry.getName());
+//			    	    	  System.out.println("invalid data: " + entry.getName());
  			    	      }
 			    	      
-//			    	      p.addColumn(Bytes.toBytes("tags"),Bytes.toBytes("TS"),
-//			    	    		  Bytes.toBytes());
 	    	    	      hTable.put(p);
+//	    	    	    byte[] a = entry.getValue(Bytes.add(ts, Bytes.toBytes(paramCounter))); 
+//	    	    	    byte[] b = entry.getValue(Bytes.add(Bytes.toBytes(paramCounter), ts));
+	    	    	      
+//	    	    	   System.out.print(Bytes.add(ts, Bytes.toBytes(paramCounter)));
+//	    	    	   System.out.println("|" + Bytes.add(Bytes.toBytes(paramCounter), ts));
+	    	    	      
 //   	            	  c++;
-//   	            	System.out.println(": " + val.getCalibratedValue() + " "
+//   	            	  System.out.println(": " + val.getCalibratedValue() + " "
 //   	                        + entry.getParameter().getUnits() + " ("
 //   	                        + val.getRawValueHex()+ ")");
 	    	    	      
@@ -144,27 +178,33 @@ public class PopulDB {
 //	    	    	      else
 //	    	    	      {
 //	    	    	    	  System.out.println();
+//                            
+//	   	                 for(int i = 0; i < ts.length; i++) 
+//		   		   	          System.out.println(String.format("%02X ", ts[i]));
+//		   		   	          System.out.println();
+////                            
+		   	                 
 //	    	    	      }
+			    	      
    	              }
-   	               
+   	               paramCounter++;
    	             
    	           }
    	            //for insert in openTSDB
    	           // double num = Double.valueOf(val.getCalibratedValue());
-
    	        
-  	       }  		                 
-   	        
-   	        
+  	       } 	                 
+   	           	        
 //   	        List<String> warnings = model.getWarnings();
 //   	        Iterator<String> it = warnings.iterator();
 //   	        while(it.hasNext())
 //   	        {
 //   	            System.err.println("WARNING: " + it.next());
 //   	        }
-  		      System.out.println("data inserted!!!"); 
+  		               
+//  		      System.out.println("data inserted!!!"); 
    	    }
-       
+      
    	    
    	 static private boolean isWithinValidRange(XTCEContainerContentEntry entry)
      {

@@ -47,7 +47,38 @@
 		<artifactId>slf4j-log4j12</artifactId>
 		<version>1.7.25</version>
 		<scope>compile</scope>
-</dependency>
+    </dependency>
+        <!-- https://mvnrepository.com/artifact/jfree/jfreechart -->
+    <dependency>
+       <groupId>jfree</groupId>
+       <artifactId>jfreechart</artifactId>
+       <version>1.0.13</version>
+    </dependency>
+    <dependency>
+       <groupId>org.apache.flink</groupId>
+       <artifactId>flink-java</artifactId>
+       <version>1.5.0</version>
+    </dependency>
+    <dependency>
+       <groupId>org.apache.flink</groupId>
+       <artifactId>flink-streaming-java_2.11</artifactId>
+       <version>1.5.0</version>
+    </dependency>
+    <dependency>
+       <groupId>org.apache.flink</groupId>
+       <artifactId>flink-clients_2.11</artifactId>
+       <version>1.5.0</version>
+    </dependency> 
+    <dependency>
+       <groupId>org.apache.flink</groupId>
+       <artifactId>flink-ml_2.10</artifactId>
+       <version>1.2.1</version>
+    </dependency>  
+    <dependency>
+       <groupId>org.apache.flink</groupId>
+       <artifactId>flink-connector-kafka-0.11_2.11</artifactId>
+       <version>1.5.0</version>
+    </dependency>    
   </dependencies>
 
   <build>

@@ -25,11 +25,19 @@ public class TableDB {
 
 	      // Instantiating table descriptor class
 	      HTableDescriptor tableDescriptor = new
-	      HTableDescriptor(TableName.valueOf("DB_1"));
+	      HTableDescriptor(TableName.valueOf("DB_tel_GO"));
 
 	      // Adding column families to table descriptor
-	      tableDescriptor.addFamily(new HColumnDescriptor("values"));
-	      tableDescriptor.addFamily(new HColumnDescriptor("tags"));
+//	      tableDescriptor.addFamily(new HColumnDescriptor("values"));
+//	      tableDescriptor.addFamily(new HColumnDescriptor("tags"));
+	      
+	      HColumnDescriptor cd1 = new HColumnDescriptor ("values");
+	      HColumnDescriptor cd2 = new HColumnDescriptor ("tags");
+	      cd1.setMaxVersions(20);
+	      cd2.setMaxVersions(20);
+	      tableDescriptor.addFamily(cd1);
+	      tableDescriptor.addFamily(cd2);
+	      
 	    
 	      // Execute the table through admin
 	      admin.createTable(tableDescriptor);
